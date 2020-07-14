@@ -1,0 +1,21 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t npassosg/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true npassosg/react-test npm test
+
+after_success:
+    - docker build -t npassosg/multi-client ./client
+    - docker build -t npassosg/multi-nginx ./nginx
+    - docker build -t npassosg/multi-server ./server
+    - docker build -t npassosg/multi-worker ./worker
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    - docker login -u $DOCKER_ID -p $DOCKER_PASSWORD    
+    - docker push npassosg/multi-client
+    - docker push npassosg/multi-nginx
+    - docker push npassosg/multi-server
+    - docker push npassosg/multi-worker
